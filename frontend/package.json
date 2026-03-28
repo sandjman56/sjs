@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SJS Digital Solutions - Frontend",
   "scripts": {
-    "build": "echo 'Static site - no build step required'",
+    "build": "mkdir -p dist && cp -r index.html css js dist/",
     "start": "npx serve ."
   },
   "engines": {
