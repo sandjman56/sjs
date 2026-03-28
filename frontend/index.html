@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SJS | Digital Solutions for Autobody Shops</title>
+  <meta name="description" content="Web development, data management, and AI integration built specifically for autobody shops. Custom tools that make your shop run smarter.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#hero" class="nav__logo">SJS<span class="nav__logo-dot">.</span></a>
+      <ul class="nav__links">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
+        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="hero__content">
+        <p class="hero__eyebrow">Digital Solutions for the Modern Shop</p>
+        <h1 class="hero__title">
+          Powering Autobody<br>
+          <span class="hero__title-accent">with Technology</span>
+        </h1>
+        <p class="hero__subtitle">
+          Web development, intelligent data management, and AI integration —
+          built specifically for autobody shops ready to run smarter.
+        </p>
+        <div class="hero__cta">
+          <a href="#services" class="btn btn--primary">Explore Services</a>
+          <a href="#contact" class="btn btn--ghost">Get in Touch</a>
+        </div>
+      </div>
+      <div class="hero__visual" aria-hidden="true">
+        <div class="orb">
+          <div class="orb__ring orb__ring--1"></div>
+          <div class="orb__ring orb__ring--2"></div>
+          <div class="orb__ring orb__ring--3"></div>
+          <div class="orb__core">
+            <span>SJS</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="services" id="services">
+      <div class="section-inner">
+        <header class="section-header">
+          <p class="section-eyebrow">What I Do</p>
+          <h2 class="section-title">Services</h2>
+        </header>
+        <div class="services__grid">
+
+          <article class="card" data-delay="0">
+            <div class="card__icon-wrap">
+              <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="34" height="22" rx="3" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M14 38h12M20 27v11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M13 12l-4 5 4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M27 12l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="17" y1="22" x2="23" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="card__title">Web Development</h3>
+            <p class="card__text">Custom websites, customer portals, and online booking systems designed to attract customers and convert visits into appointments.</p>
+            <ul class="card__list">
+              <li>Custom design &amp; development</li>
+              <li>Online scheduling &amp; estimates</li>
+              <li>SEO &amp; performance optimization</li>
+              <li>Mobile-first, always</li>
+            </ul>
+          </article>
+
+          <article class="card card--featured" data-delay="120">
+            <div class="card__badge">Most Popular</div>
+            <div class="card__icon-wrap">
+              <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <ellipse cx="20" cy="10" rx="14" ry="5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M6 10v8c0 2.76 6.27 5 14 5s14-2.24 14-5v-8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M6 18v8c0 2.76 6.27 5 14 5s14-2.24 14-5v-8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M28 30v4M20 33l8 3 8-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="card__title">Data Management</h3>
+            <p class="card__text">Turn your shop's raw data into a competitive edge. Analytics dashboards and tracking systems that give you clarity and control.</p>
+            <ul class="card__list">
+              <li>Analytics &amp; reporting dashboards</li>
+              <li>Inventory &amp; parts tracking</li>
+              <li>Job workflow management</li>
+              <li>Insurance cycle-time reports</li>
+            </ul>
+          </article>
+
+          <article class="card" data-delay="240">
+            <div class="card__icon-wrap">
+              <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <circle cx="20" cy="20" r="5" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="6" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="34" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="6" cy="31" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="34" cy="31" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="9" y1="10.5" x2="15.5" y2="16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="31" y1="10.5" x2="24.5" y2="16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="9" y1="29.5" x2="15.5" y2="23.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="31" y1="29.5" x2="24.5" y2="23.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="card__title">AI Integration</h3>
+            <p class="card__text">Put AI to work in your shop. From automated damage estimating to intelligent customer follow-up — practical AI that solves real problems.</p>
+            <ul class="card__list">
+              <li>AI-assisted damage estimating</li>
+              <li>Automated customer follow-up</li>
+              <li>Photo-to-estimate pipeline</li>
+              <li>Predictive job scheduling</li>
+            </ul>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="about" id="about">
+      <div class="section-inner about__inner">
+        <div class="about__visual" aria-hidden="true">
+          <div class="hex-grid">
+            <div class="hex hex--1"></div>
+            <div class="hex hex--2"></div>
+            <div class="hex hex--3"></div>
+            <div class="hex hex--4"></div>
+            <div class="hex hex--5"></div>
+            <div class="hex hex--6"></div>
+            <div class="hex hex--7"></div>
+          </div>
+        </div>
+        <div class="about__content">
+          <p class="section-eyebrow">About</p>
+          <h2 class="section-title">Tech built for<br>the shop floor</h2>
+          <p class="about__text">
+            I specialize in bringing modern web technology, data systems, and AI to an industry that's ready for it. Autobody shops run complex operations — managing jobs, parts, customers, and insurance — and the right tech makes all the difference.
+          </p>
+          <p class="about__text">
+            I work directly with shop owners to understand workflows before writing a single line of code. No templates. No bloat. Just clean, purposeful software built to last.
+          </p>
+          <div class="about__stats">
+            <div class="stat">
+              <span class="stat__num">100%</span>
+              <span class="stat__label">Custom-built</span>
+            </div>
+            <div class="stat">
+              <span class="stat__num">∞</span>
+              <span class="stat__label">Scalable</span>
+            </div>
+            <div class="stat">
+              <span class="stat__num">24/7</span>
+              <span class="stat__label">Always live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact" id="contact">
+      <div class="section-inner">
+        <header class="section-header">
+          <p class="section-eyebrow">Get Started</p>
+          <h2 class="section-title">Let's build something</h2>
+          <p class="contact__subtitle">Tell me about your shop and what you want to improve. I'll get back to you within 24 hours.</p>
+        </header>
+        <form class="contact__form" id="contact-form" novalidate>
+          <div class="form__row">
+            <div class="form__group">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" placeholder="Your name" required autocomplete="name">
+            </div>
+            <div class="form__group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="you@yourshop.com" required autocomplete="email">
+            </div>
+          </div>
+          <div class="form__group">
+            <label for="shop">Shop Name</label>
+            <input type="text" id="shop" name="shop" placeholder="Your autobody shop (optional)" autocomplete="organization">
+          </div>
+          <div class="form__group">
+            <label for="service">Service Interest</label>
+            <select id="service" name="service">
+              <option value="">Select a service...</option>
+              <option value="web">Web Development</option>
+              <option value="data">Data Management</option>
+              <option value="ai">AI Integration</option>
+              <option value="all">All of the above</option>
+            </select>
+          </div>
+          <div class="form__group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Tell me about your shop and what you need..." rows="5"></textarea>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full">Send Message</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <a href="#hero" class="nav__logo">SJS<span class="nav__logo-dot">.</span></a>
+      <p class="footer__tagline">Web Development · Data Management · AI Integration</p>
+      <p class="footer__copy">&copy; 2026 SJS. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/canvas-light.js"></script>
+  <script src="js/canvas-dark.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
