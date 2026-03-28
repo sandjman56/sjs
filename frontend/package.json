@@ -1,0 +1,12 @@
+{
+  "name": "sjs-frontend",
+  "version": "1.0.0",
+  "description": "SJS Digital Solutions - Frontend",
+  "scripts": {
+    "build": "echo 'Static site - no build step required'",
+    "start": "npx serve ."
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
