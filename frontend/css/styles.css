@@ -326,15 +326,11 @@ section {
 }
 
 .hero .section-inner {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 60px;
   padding-top: 40px;
   padding-bottom: 40px;
 }
 
-.hero__content { max-width: 620px; }
+.hero__content { max-width: 680px; }
 
 .hero__eyebrow {
   font-family: 'Orbitron', sans-serif;
@@ -886,10 +882,6 @@ section {
 }
 
 @media (max-width: 860px) {
-  .hero .section-inner {
-    grid-template-columns: 1fr;
-  }
-  .hero__visual { display: none; }
   .hero__content { max-width: 100%; }
 
   .about__inner {

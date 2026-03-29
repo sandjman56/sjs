@@ -1,7 +1,7 @@
 /**
  * canvas-dark.js
- * Dark mode background: Tron-inspired grid with moving neon light trails,
- * pulsing intersection nodes, and occasional data-burst flares.
+ * Dark mode background: Tron-inspired square grid with light cycles
+ * that navigate the grid at intersections, pulsing nodes, and brief flares.
  */
 
 (function () {
@@ -19,84 +19,142 @@
     return `hsla(${c.h},${c.s}%,${c.l}%,${alpha})`;
   }
 
-  // ── Trail ─────────────────────────────────────────────────────────────────
-  // A bright line segment traveling along a grid axis
-  class Trail {
+  // ── TronCar ───────────────────────────────────────────────────────────────
+  // A light cycle that travels along grid lines and turns at intersections.
+  class TronCar {
     constructor(w, h, gridSize) {
       this.gs = gridSize;
       this.color = NEON[Math.floor(Math.random() * NEON.length)];
-      this.speed = 1.8 + Math.random() * 3;
-      this.tailLen = 80 + Math.random() * 140;
+      this.speed = 1.1 + Math.random() * 1.3;
+      this.bodyLen = 28 + Math.random() * 22;
       this.history = [];
+      this._w = w;
+      this._h = h;
 
-      const horiz = Math.random() > 0.45;
-      if (horiz) {
-        const rows = Math.ceil(h / gridSize);
-        const row = Math.floor(Math.random() * rows);
-        this.y = row * gridSize;
-        const goRight = Math.random() > 0.5;
-        this.x = goRight ? -this.tailLen : w + this.tailLen;
-        this.dx = goRight ? this.speed : -this.speed;
-        this.dy = 0;
-        this._limit = goRight ? w + this.tailLen + 20 : -this.tailLen - 20;
-        this._dead = () => goRight ? this.x > this._limit : this.x < this._limit;
-      } else {
-        const cols = Math.ceil(w / gridSize);
-        const col = Math.floor(Math.random() * cols);
-        this.x = col * gridSize;
-        const goDown = Math.random() > 0.5;
-        this.y = goDown ? -this.tailLen : h + this.tailLen;
-        this.dx = 0;
-        this.dy = goDown ? this.speed : -this.speed;
-        this._limit = goDown ? h + this.tailLen + 20 : -this.tailLen - 20;
-        this._dead = () => goDown ? this.y > this._limit : this.y < this._limit;
-      }
+      // Start at a random interior grid intersection
+      const cols = Math.max(2, Math.floor(w / gridSize) - 2);
+      const rows = Math.max(2, Math.floor(h / gridSize) - 2);
+      const col = 1 + Math.floor(Math.random() * cols);
+      const row = 1 + Math.floor(Math.random() * rows);
+      this.x = col * gridSize;
+      this.y = row * gridSize;
+
+      // Random initial direction
+      const DIRS = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
+      const d = DIRS[Math.floor(Math.random() * DIRS.length)];
+      this.dx = d.dx;
+      this.dy = d.dy;
+
+      this._toNext = gridSize;  // distance until next intersection
+      this._dead = false;
+      this._offFrames = 0;
     }
 
-    get dead() { return this._dead(); }
+    get dead() { return this._dead; }
 
     update() {
       this.history.push({ x: this.x, y: this.y });
-      // Trim tail
+
+      // Trim trail to body length
       while (this.history.length > 1) {
         const oldest = this.history[0];
-        const dx = this.x - oldest.x;
-        const dy = this.y - oldest.y;
-        if (Math.sqrt(dx * dx + dy * dy) > this.tailLen) {
+        const ddx = this.x - oldest.x;
+        const ddy = this.y - oldest.y;
+        if (Math.sqrt(ddx * ddx + ddy * ddy) > this.bodyLen) {
           this.history.shift();
         } else {
           break;
         }
       }
-      this.x += this.dx;
-      this.y += this.dy;
+
+      this.x += this.dx * this.speed;
+      this.y += this.dy * this.speed;
+      this._toNext -= this.speed;
+
+      // At intersection: snap and choose new direction
+      if (this._toNext <= 0) {
+        this.x = Math.round(this.x / this.gs) * this.gs;
+        this.y = Math.round(this.y / this.gs) * this.gs;
+        this._toNext = this.gs;
+        this._pickDirection();
+      }
+
+      // Kill if off-screen too long
+      const w = this._w;
+      const h = this._h;
+      const margin = this.gs * 3;
+      const offScreen = this.x < -margin || this.x > w + margin ||
+                        this.y < -margin || this.y > h + margin;
+      if (offScreen) {
+        this._offFrames++;
+        if (this._offFrames > 90) this._dead = true;
+      } else {
+        this._offFrames = 0;
+      }
+    }
+
+    _pickDirection() {
+      const w = this._w;
+      const h = this._h;
+      const options = [];
+
+      // Prefer going straight
+      options.push({ dx: this.dx, dy: this.dy, wt: 4 });
+
+      // Perpendicular turns
+      if (this.dx !== 0) {
+        options.push({ dx: 0, dy: 1, wt: 1 });
+        options.push({ dx: 0, dy: -1, wt: 1 });
+      } else {
+        options.push({ dx: 1, dy: 0, wt: 1 });
+        options.push({ dx: -1, dy: 0, wt: 1 });
+      }
+
+      // Steer back toward screen center if near edges
+      const margin = this.gs * 5;
+      if (this.x < margin)      options.push({ dx: 1,  dy: 0,  wt: 6 });
+      if (this.x > w - margin)  options.push({ dx: -1, dy: 0,  wt: 6 });
+      if (this.y < margin)      options.push({ dx: 0,  dy: 1,  wt: 6 });
+      if (this.y > h - margin)  options.push({ dx: 0,  dy: -1, wt: 6 });
+
+      const total = options.reduce((s, o) => s + o.wt, 0);
+      let rand = Math.random() * total;
+      for (const o of options) {
+        rand -= o.wt;
+        if (rand <= 0) {
+          this.dx = o.dx;
+          this.dy = o.dy;
+          return;
+        }
+      }
     }
 
     draw(ctx) {
       if (this.history.length < 2) return;
-
       ctx.save();
-      ctx.lineCap = 'round';
+      ctx.lineCap = 'square';
 
       const len = this.history.length;
       for (let i = 1; i < len; i++) {
         const t = i / len;
-        const alpha = t * 0.9;
+        const alpha = Math.pow(t, 1.4) * 0.85;
+        const p0 = this.history[i - 1];
+        const p1 = this.history[i];
         ctx.beginPath();
-        ctx.moveTo(this.history[i - 1].x, this.history[i - 1].y);
-        ctx.lineTo(this.history[i].x, this.history[i].y);
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
         ctx.strokeStyle = neonColor(this.color, alpha);
-        ctx.lineWidth = 1.5 + t;
-        ctx.shadowColor = neonColor(this.color, 0.6);
-        ctx.shadowBlur = 8 + t * 8;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = neonColor(this.color, 0.45);
+        ctx.shadowBlur = 5;
         ctx.stroke();
       }
 
-      // Bright head dot
+      // Bright headlight
       ctx.beginPath();
-      ctx.arc(this.x, this.y, 3.5, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = neonColor(this.color, 1);
-      ctx.shadowBlur = 22;
+      ctx.shadowBlur = 16;
       ctx.shadowColor = neonColor(this.color, 0.9);
       ctx.fill();
 
@@ -104,7 +162,7 @@
     }
   }
 
-  // ── Node flash ────────────────────────────────────────────────────────────
+  // ── NodeFlash ─────────────────────────────────────────────────────────────
   // A brief bright flare at a grid intersection
   class NodeFlash {
     constructor(x, y) {
@@ -141,18 +199,17 @@
     ctx: null,
     raf: null,
     active: false,
-    trails: [],
+    cars: [],
     flashes: [],
     gridSize: 64,
-    MAX_TRAILS: 14,
+    MAX_CARS: 7,
     _frame: 0,
-    // Precomputed node list for flash spawning
     _nodes: [],
 
     init(canvas) {
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
-      this.trails = [];
+      this.cars = [];
       this.flashes = [];
       this._frame = 0;
 
@@ -202,6 +259,8 @@
       if (this.ctx) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
+      this.cars = [];
+      this.flashes = [];
     },
 
     _drawGrid(ctx, w, h) {
@@ -227,7 +286,6 @@
     },
 
     _drawStaticNodes(ctx) {
-      // A fraction of nodes get a dim persistent glow, drifting in phase
       const t = this._frame * 0.008;
       ctx.save();
       for (let i = 0; i < this._nodes.length; i += 6) {
@@ -255,31 +313,27 @@
       const h = this.canvas.height;
 
       ctx.clearRect(0, 0, w, h);
-
       this._frame++;
 
-      // Grid
       this._drawGrid(ctx, w, h);
-
-      // Static node pulses
       this._drawStaticNodes(ctx);
 
-      // Spawn trails
-      if (this.trails.length < this.MAX_TRAILS && this._frame % 18 === 0) {
-        this.trails.push(new Trail(w, h, this.gridSize));
+      // Spawn cars gradually (stagger initial spawn)
+      if (this.cars.length < this.MAX_CARS && this._frame % 22 === 0) {
+        this.cars.push(new TronCar(w, h, this.gridSize));
       }
 
-      // Spawn random node flash
-      if (Math.random() < 0.015 && this._nodes.length > 0) {
+      // Spawn occasional node flash (sparse — not too distracting)
+      if (Math.random() < 0.012 && this._nodes.length > 0) {
         const node = this._nodes[Math.floor(Math.random() * this._nodes.length)];
         this.flashes.push(new NodeFlash(node.x, node.y));
       }
 
-      // Update & draw trails
-      this.trails = this.trails.filter(t => !t.dead);
-      for (const t of this.trails) {
-        t.update();
-        t.draw(ctx);
+      // Update & draw cars
+      this.cars = this.cars.filter(c => !c.dead);
+      for (const car of this.cars) {
+        car.update();
+        car.draw(ctx);
       }
 
       // Update & draw flashes

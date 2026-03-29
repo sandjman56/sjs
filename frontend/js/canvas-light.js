@@ -1,106 +1,125 @@
 /**
  * canvas-light.js
- * Light mode background: colorful fractal bursts that splinter
- * in and out of existence across the canvas.
+ * Light mode background: hexagonal grid with random color explosions
+ * and color "lightning" propagation between adjacent cells.
  */
 
 (function () {
   'use strict';
 
-  // ── Palette: vivid, saturated colors (avoid muddy mid-range) ─────────────
   const HUES = [260, 285, 310, 195, 220, 175, 330, 240, 160];
 
-  // ── FractalBurst ──────────────────────────────────────────────────────────
-  class FractalBurst {
-    constructor(w, h) {
-      this.x = Math.random() * w;
-      this.y = Math.random() * h;
-      this.baseHue = HUES[Math.floor(Math.random() * HUES.length)];
-      this.maxDepth = 5 + Math.floor(Math.random() * 3);
-      this.baseLen = 38 + Math.random() * 55;
-      this.spread = 0.38 + Math.random() * 0.52;
-      this.lenDecay = 0.60 + Math.random() * 0.10;
-
-      // "Splinter" — initial direction can be anything
-      const startAngle = Math.random() * Math.PI * 2;
-
-      // Pre-compute all line segments sorted by depth (trunk → tips)
-      this.segments = [];
-      this._build(this.x, this.y, startAngle, this.baseLen, 0);
-      this.segments.sort((a, b) => a.d - b.d);
-
-      // Playback state
-      this.revealed = 0;          // how many segments are visible
-      this.revealRate = 4 + Math.floor(Math.random() * 4); // per frame
-      this.opacity = 0;
-      this.fadeInRate = 0.06;
-      this.fadeOutRate = 0.012 + Math.random() * 0.008;
-      this.holdFrames = 50 + Math.floor(Math.random() * 70);
-      this.holdCount = 0;
-      this.phase = 'in'; // in | hold | out
+  // ── HexCell ───────────────────────────────────────────────────────────────
+  class HexCell {
+    constructor(cx, cy, r, index) {
+      this.cx = cx;
+      this.cy = cy;
+      this.r = r;
+      this.index = index;
+      this.hue = 0;
+      this.brightness = 0;
+      this.targetBrt = 0;
+      this.fadeSpeed = 0.008 + Math.random() * 0.006;
+      this.neighbors = [];
     }
 
-    _build(x1, y1, angle, len, depth) {
-      if (depth > this.maxDepth || len < 4) return;
-
-      const x2 = x1 + Math.cos(angle) * len;
-      const y2 = y1 + Math.sin(angle) * len;
-      const hue = (this.baseHue + depth * 32) % 360;
-      const width = Math.max(0.4, (this.maxDepth - depth + 1) * 0.65);
-
-      this.segments.push({ x1, y1, x2, y2, hue, w: width, d: depth });
-
-      const nextLen = len * this.lenDecay;
-
-      // Left child
-      this._build(x2, y2, angle - this.spread, nextLen, depth + 1);
-      // Right child
-      this._build(x2, y2, angle + this.spread, nextLen, depth + 1);
-
-      // Occasional third branch on shallow depths for crystal feel
-      if (depth < 2 && Math.random() > 0.45) {
-        const midAngle = angle + (Math.random() - 0.5) * 0.28;
-        this._build(x2, y2, midAngle, nextLen * 0.72, depth + 1);
-      }
+    ignite(hue, intensity) {
+      this.hue = hue;
+      this.targetBrt = Math.min(1, intensity);
+      this.brightness = Math.min(1, this.brightness + intensity * 0.5);
     }
 
     update() {
-      if (this.phase === 'in') {
-        this.opacity = Math.min(1, this.opacity + this.fadeInRate);
-        this.revealed = Math.min(this.segments.length, this.revealed + this.revealRate);
-        if (this.revealed >= this.segments.length) this.phase = 'hold';
-      } else if (this.phase === 'hold') {
-        this.holdCount++;
-        if (this.holdCount >= this.holdFrames) this.phase = 'out';
+      if (this.brightness < this.targetBrt) {
+        this.brightness = Math.min(this.targetBrt, this.brightness + 0.1);
       } else {
-        this.opacity -= this.fadeOutRate;
+        this.brightness = Math.max(0, this.brightness - this.fadeSpeed);
+        if (this.brightness < 0.004) this.targetBrt = 0;
       }
+    }
+
+    // Draws just the outline path (for base grid pass)
+    drawBase(ctx) {
+      const r = this.r;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (60 * i - 30) * Math.PI / 180;
+        const x = this.cx + r * Math.cos(angle);
+        const y = this.cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
     }
 
     draw(ctx) {
-      if (this.opacity <= 0) return;
-
+      if (this.brightness < 0.004) return;
+      const r = this.r * 0.96;
       ctx.save();
-      ctx.globalAlpha = this.opacity * 0.82;
-      ctx.lineCap = 'round';
-
-      for (let i = 0; i < this.revealed; i++) {
-        const seg = this.segments[i];
-        ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
-        ctx.strokeStyle = `hsl(${seg.hue}, 90%, 52%)`;
-        ctx.lineWidth = seg.w;
-        ctx.shadowColor = `hsl(${seg.hue}, 100%, 62%)`;
-        ctx.shadowBlur = 10;
-        ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (60 * i - 30) * Math.PI / 180;
+        const x = this.cx + r * Math.cos(angle);
+        const y = this.cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
+      ctx.closePath();
 
+      ctx.fillStyle = `hsla(${this.hue}, 85%, 58%, ${this.brightness * 0.14})`;
+      ctx.fill();
+
+      ctx.strokeStyle = `hsla(${this.hue}, 90%, 62%, ${this.brightness * 0.75})`;
+      ctx.lineWidth = 1;
+      ctx.shadowColor = `hsla(${this.hue}, 100%, 65%, ${this.brightness * 0.45})`;
+      ctx.shadowBlur = 10 * this.brightness;
+      ctx.stroke();
       ctx.restore();
     }
+  }
 
-    get done() {
-      return this.phase === 'out' && this.opacity <= 0;
+  // ── ColorWave ─────────────────────────────────────────────────────────────
+  // Propagates a color explosion outward from a source cell, skipping some
+  // neighbors randomly to create a "lightning" branching effect.
+  class ColorWave {
+    constructor(startIdx, cells, hue) {
+      this.cells = cells;
+      this.hue = hue;
+      this.depth = 0;
+      this.maxDepth = 3 + Math.floor(Math.random() * 6);
+      this.frontier = [startIdx];
+      this.visited = new Set([startIdx]);
+      this.timer = 0;
+      this.stepInterval = 3 + Math.floor(Math.random() * 3);
+      this.done = false;
+    }
+
+    update() {
+      this.timer++;
+      if (this.timer % this.stepInterval !== 0) return;
+      if (this.frontier.length === 0 || this.depth >= this.maxDepth) {
+        this.done = true;
+        return;
+      }
+
+      const nextFrontier = [];
+      const intensity = 0.9 * Math.pow(0.62, this.depth);
+
+      for (const idx of this.frontier) {
+        const cell = this.cells[idx];
+        if (!cell) continue;
+        cell.ignite(this.hue, intensity);
+
+        for (const nIdx of cell.neighbors) {
+          if (!this.visited.has(nIdx) && Math.random() > 0.28) {
+            this.visited.add(nIdx);
+            nextFrontier.push(nIdx);
+          }
+        }
+      }
+
+      this.frontier = nextFrontier;
+      this.depth++;
     }
   }
 
@@ -108,20 +127,23 @@
   const LightCanvas = {
     canvas: null,
     ctx: null,
-    bursts: [],
+    cells: [],
+    waves: [],
     raf: null,
     active: false,
-    MAX_BURSTS: 6,
-    SPAWN_INTERVAL: 40, // frames between spawn checks
     _frame: 0,
-    _resizeId: null,
+    HEX_R: 26,
 
     init(canvas) {
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
-      this._onResize = () => this._resize();
+      this._onResize = () => {
+        this._resize();
+        this._buildGrid();
+      };
       window.addEventListener('resize', this._onResize);
       this._resize();
+      this._buildGrid();
     },
 
     _resize() {
@@ -130,10 +152,70 @@
       this.canvas.height = window.innerHeight;
     },
 
+    _buildGrid() {
+      this.cells = [];
+      this.waves = [];
+      const r = this.HEX_R;
+      const W = this.canvas.width;
+      const H = this.canvas.height;
+
+      // Pointy-top hex grid (offset row layout)
+      // Horizontal spacing between col centers in same row: sqrt(3) * r
+      // Vertical spacing between row centers: 1.5 * r
+      // Odd rows are offset right by sqrt(3)/2 * r
+      const colSpacing = Math.sqrt(3) * r;
+      const rowSpacing = 1.5 * r;
+
+      const cols = Math.ceil(W / colSpacing) + 2;
+      const rows = Math.ceil(H / rowSpacing) + 2;
+
+      const map = {};
+
+      for (let row = -1; row <= rows; row++) {
+        for (let col = -1; col <= cols; col++) {
+          const cx = col * colSpacing + (row % 2 !== 0 ? colSpacing / 2 : 0);
+          const cy = row * rowSpacing + r;
+          const idx = this.cells.length;
+          map[`${col},${row}`] = idx;
+          this.cells.push(new HexCell(cx, cy, r, idx));
+        }
+      }
+
+      // Assign neighbors (odd-r offset grid)
+      for (let row = -1; row <= rows; row++) {
+        for (let col = -1; col <= cols; col++) {
+          const idx = map[`${col},${row}`];
+          if (idx === undefined) continue;
+          const cell = this.cells[idx];
+
+          let offsets;
+          if (row % 2 === 0) {
+            offsets = [
+              [col - 1, row], [col + 1, row],
+              [col - 1, row - 1], [col, row - 1],
+              [col - 1, row + 1], [col, row + 1],
+            ];
+          } else {
+            offsets = [
+              [col - 1, row], [col + 1, row],
+              [col, row - 1], [col + 1, row - 1],
+              [col, row + 1], [col + 1, row + 1],
+            ];
+          }
+
+          for (const [nc, nr] of offsets) {
+            const nIdx = map[`${nc},${nr}`];
+            if (nIdx !== undefined) cell.neighbors.push(nIdx);
+          }
+        }
+      }
+    },
+
     start() {
       if (this.active) return;
       this.active = true;
       this._resize();
+      this._buildGrid();
       this._loop();
     },
 
@@ -146,10 +228,15 @@
       if (this.ctx) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
+      this.waves = [];
     },
 
-    _spawn() {
-      this.bursts.push(new FractalBurst(this.canvas.width, this.canvas.height));
+    _spawnWave() {
+      if (this.cells.length === 0) return;
+      const hue = HUES[Math.floor(Math.random() * HUES.length)];
+      const startIdx = Math.floor(Math.random() * this.cells.length);
+      this.cells[startIdx].ignite(hue, 1.0);
+      this.waves.push(new ColorWave(startIdx, this.cells, hue));
     },
 
     _loop() {
@@ -161,22 +248,40 @@
       const h = this.canvas.height;
 
       ctx.clearRect(0, 0, w, h);
-
       this._frame++;
 
-      // Maintain burst count
-      if (this._frame % this.SPAWN_INTERVAL === 0 || this.bursts.length === 0) {
-        const needed = this.MAX_BURSTS - this.bursts.filter(b => !b.done).length;
-        for (let i = 0; i < Math.min(needed, 2); i++) {
-          this._spawn();
-        }
+      // Base grid pass — one save/restore for all cells
+      ctx.save();
+      ctx.strokeStyle = 'rgba(108, 63, 255, 0.065)';
+      ctx.lineWidth = 0.6;
+      ctx.shadowBlur = 0;
+      for (const cell of this.cells) {
+        cell.drawBase(ctx);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Spawn new wave every ~90 frames; also keep at least one going
+      if (this._frame % 90 === 1) {
+        this._spawnWave();
+      }
+      if (this._frame % 150 === 75 && Math.random() < 0.65) {
+        this._spawnWave();
+      }
+      if (this.waves.length === 0 && this._frame % 20 === 0) {
+        this._spawnWave();
       }
 
-      // Update & draw, prune dead bursts
-      this.bursts = this.bursts.filter(b => !b.done);
-      for (const b of this.bursts) {
-        b.update();
-        b.draw(ctx);
+      // Update waves
+      this.waves = this.waves.filter(wv => !wv.done);
+      for (const wv of this.waves) {
+        wv.update();
+      }
+
+      // Update & draw lit cells
+      for (const cell of this.cells) {
+        cell.update();
+        cell.draw(ctx);
       }
     },
   };
